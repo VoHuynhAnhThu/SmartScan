@@ -8,4 +8,3 @@
 #     ├── yolov8n.pt  ← downloads here
 #     ├── yolov8s.pt
 #     └── ...
-
