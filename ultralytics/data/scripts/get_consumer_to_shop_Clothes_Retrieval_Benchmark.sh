@@ -7,9 +7,9 @@ set -eu
 
 d='datasets'
 
-file_eval_id='1evyngAeBekkP4MpPPsQKCmx_nnNLBQxr'
-file_img_highres_id='1w1V8ZBUo3o9WYugaCQMI6xYi73--DobJ'
-file_img_id='1fAKz7944axwrlt-yTZmiF0etwky-V60R'
+file_eval_id='1C9AZR1CQZo5OhtBTXDhIANS_1_MAyZt-'
+file_img_highres_id='1L8efh0kfaXyn55VbxYuxpqB5SIdZ5q6x'
+file_img_id='19XiJvUcswiURKLVPOU6fJtbWMpATB2XR'
 
 f_eval='consumer_to_shop_Clothes_Retrieval_Benchmark.zip'
 f_img_highres='img_highres.zip'
