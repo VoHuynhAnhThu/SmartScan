@@ -1,5 +1,6 @@
-from ultralytics import YOLO
 from glob import glob
+
+from ultralytics import YOLO
 
 # Load a pretrained YOLO11n model
 model = YOLO("yolo11x.pt")
@@ -13,11 +14,11 @@ train_results = model.train(
     imgsz=640,  # Image size for training
     device="0",  # Device to run on (e.g., 'cpu', 0, [0,1,2,3])
     workers=2,
-    patience=3,            # Early stopping
+    patience=3,  # Early stopping
     save=True,
     exist_ok=False,
     pretrained=True,
-    optimizer='auto',
+    optimizer="auto",
     verbose=True,
     seed=42,
     deterministic=True,
@@ -29,12 +30,10 @@ train_results = model.train(
     momentum=0.937,
     weight_decay=0.0005,
     warmup_epochs=1.0,
-    
     # Loss weights
     box=7.5,
     cls=0.5,
     dfl=1.5,
-    
     # Augmentation (conservative for fashion)
     hsv_h=0.01,
     hsv_s=0.5,
@@ -43,10 +42,9 @@ train_results = model.train(
     translate=0.1,
     scale=0.3,
     flipud=0.0,
-    fliplr=0.5,            # Horizontal flip OK for clothes
+    fliplr=0.5,  # Horizontal flip OK for clothes
     mosaic=0.0,
     mixup=0.0,
-
 )
 
 # Evaluate the model's performance on the validation set
