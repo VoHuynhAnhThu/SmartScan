@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from PIL import Image
 
@@ -27,16 +26,16 @@ def find_partition_file(eval_dir: Path) -> Path | None:
     return found[0] if found else None
 
 
-def parse_bbox_file(bbox_file: Path) -> Dict[str, List[Tuple[int, int, int, int]]]:
-    mapping: Dict[str, List[Tuple[int, int, int, int]]] = {}
-    with open(bbox_file, "r", encoding="utf-8", errors="ignore") as f:
+def parse_bbox_file(bbox_file: Path) -> dict[str, list[tuple[int, int, int, int]]]:
+    mapping: dict[str, list[tuple[int, int, int, int]]] = {}
+    with open(bbox_file, encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()[2:]
 
         print(f"\n[DEBUG] parse_bbox_file: Tổng {len(lines)} dòng")
-        print(f"[DEBUG] 3 dòng đầu tiên:")
+        print("[DEBUG] 3 dòng đầu tiên:")
         for i in range(min(3, len(lines))):
             print(f"  Line {i}: {lines[i].strip()}")
-        
+
         for idx, line in enumerate(lines):
             line = line.strip()
             if not line or line.startswith("#"):
@@ -44,45 +43,45 @@ def parse_bbox_file(bbox_file: Path) -> Dict[str, List[Tuple[int, int, int, int]
             parts = line.split()
 
             if idx == 0:
-                print(f"\n[DEBUG] Parse dòng đầu tiên chi tiết:")
+                print("\n[DEBUG] Parse dòng đầu tiên chi tiết:")
                 print(f"  parts = {parts}")
                 print(f"  len(parts) = {len(parts)}")
                 if len(parts) >= 4:
                     print(f"  parts[-4:] (bbox coords) = {parts[-4:]}")
                 print(f"  parts[0] (image path) = {parts[0]}")
-            
+
             if len(parts) < 5:
                 if idx < 3:
                     print(f"[WARN] Dòng {idx}: len(parts)={len(parts)} < 5, bỏ qua")
                 continue
-            
+
             try:
                 x1, y1, x2, y2 = map(int, parts[-4:])
             except Exception as e:
                 if idx < 3:
                     print(f"[ERROR] Dòng {idx}: Không parse được bbox: {e}")
                 continue
-            
+
             img_rel = parts[0]
 
             if idx < 3:
                 print(f"  → Key: '{img_rel}', bbox: ({x1}, {y1}, {x2}, {y2})")
-            
+
             mapping.setdefault(img_rel, []).append((x1, y1, x2, y2))
-    
+
     return mapping
 
 
-def parse_partition_file(part_file: Path) -> Dict[str, str]:
-    mapping: Dict[str, str] = {}
-    with open(part_file, "r", encoding="utf-8", errors="ignore") as f:
+def parse_partition_file(part_file: Path) -> dict[str, str]:
+    mapping: dict[str, str] = {}
+    with open(part_file, encoding="utf-8", errors="ignore") as f:
         lines = f.readlines()[2:]
 
         print(f"\n[DEBUG] parse_partition_file: Tổng {len(lines)} dòng")
-        print(f"[DEBUG] 3 dòng đầu tiên:")
+        print("[DEBUG] 3 dòng đầu tiên:")
         for i in range(min(3, len(lines))):
             print(f"  Line {i}: {lines[i].strip()}")
-        
+
         for idx, line in enumerate(lines):
             line = line.strip()
             if not line or line.startswith("#"):
@@ -90,12 +89,12 @@ def parse_partition_file(part_file: Path) -> Dict[str, str]:
             parts = line.split()
 
             if idx == 0:
-                print(f"\n[DEBUG] Parse dòng đầu tiên chi tiết:")
+                print("\n[DEBUG] Parse dòng đầu tiên chi tiết:")
                 print(f"  parts = {parts}")
                 print(f"  len(parts) = {len(parts)}")
                 print(f"  parts[0] (image path) = {parts[0]}")
                 print(f"  parts[-1] = {parts[-1]}")
-            
+
             if len(parts) < 2:
                 continue
 
@@ -109,10 +108,10 @@ def parse_partition_file(part_file: Path) -> Dict[str, str]:
 
             if idx < 3:
                 print(f"  → Key: '{img_rel}', split: '{split}'")
-            
+
             if split:
                 mapping[img_rel] = split
-    
+
     return mapping
 
 
@@ -126,7 +125,7 @@ def ensure_link_or_copy(src: Path, dst: Path):
         shutil.copy2(src, dst)
 
 
-def _candidate_image_roots(root: Path) -> List[Path]:
+def _candidate_image_roots(root: Path) -> list[Path]:
     names = ["", "img_highres", "img", "images", "image", "Img", "Images"]
     cands = [root / n for n in names]
 
@@ -150,7 +149,7 @@ def _normalize_rel_path(rel_path: str) -> str:
     return rp
 
 
-def _strip_known_prefixes(rp: str) -> List[str]:
+def _strip_known_prefixes(rp: str) -> list[str]:
     variants = [rp]
     parts = rp.split("/")
     if parts and parts[0].lower() in {"img_highres", "img", "images", "image"}:
@@ -175,10 +174,10 @@ def _resolve_img_path(base_dir: Path, rel_path: str) -> Path | None:
     return None
 
 
-def _score_candidates(root: Path, rel_paths: List[str]) -> List[Tuple[Path, int]]:
+def _score_candidates(root: Path, rel_paths: list[str]) -> list[tuple[Path, int]]:
     cands = _candidate_image_roots(root)
     sample = rel_paths[: min(200, len(rel_paths))]
-    scores: List[Tuple[Path, int]] = []
+    scores: list[tuple[Path, int]] = []
     for base in cands:
         hits = 0
         for rp in sample:
@@ -192,7 +191,7 @@ def _score_candidates(root: Path, rel_paths: List[str]) -> List[Tuple[Path, int]
     return scores
 
 
-def _pick_base_dir(dataset_root: Path, rel_paths: List[str]) -> Path | None:
+def _pick_base_dir(dataset_root: Path, rel_paths: list[str]) -> Path | None:
     scores = _score_candidates(dataset_root, rel_paths)
     return scores[0][0] if scores and scores[0][1] > 0 else None
 
@@ -226,19 +225,19 @@ def convert_deepfashion_cts_to_yolo(
     bbox_map = parse_bbox_file(bbox_file)
     split_map = parse_partition_file(part_file)
 
-    print(f"\n[DEBUG] ===== SUMMARY =====")
+    print("\n[DEBUG] ===== SUMMARY =====")
     print(f"[DEBUG] bbox_map có {len(bbox_map)} entries")
-    print(f"[DEBUG] 5 key đầu tiên của bbox_map:")
+    print("[DEBUG] 5 key đầu tiên của bbox_map:")
     for i, key in enumerate(list(bbox_map.keys())[:5]):
         print(f"  {i}: '{key}' -> {len(bbox_map[key])} bbox(es)")
-    
+
     print(f"\n[DEBUG] split_map có {len(split_map)} entries")
-    print(f"[DEBUG] 5 key đầu tiên của split_map:")
+    print("[DEBUG] 5 key đầu tiên của split_map:")
     for i, key in enumerate(list(split_map.keys())[:5]):
         print(f"  {i}: '{key}' -> '{split_map[key]}'")
-    
+
     # Kiểm tra matching
-    print(f"\n[DEBUG] ===== KEY MATCHING CHECK =====")
+    print("\n[DEBUG] ===== KEY MATCHING CHECK =====")
     sample_keys = list(bbox_map.keys())[:10]
     matches = 0
     for key in sample_keys:
@@ -266,48 +265,48 @@ def convert_deepfashion_cts_to_yolo(
     print(f"\n[i] Chọn thư mục ảnh gốc: {base_dir}")
 
     kept, skipped_missing_img, skipped_no_bbox, skipped_no_split = 0, 0, 0, 0
-    splits_count: Dict[str, int] = {"train": 0, "val": 0, "test": 0}
-    missing_samples: List[str] = []
-    
-    print(f"\n[DEBUG] ===== PROCESSING IMAGES =====")
+    splits_count: dict[str, int] = {"train": 0, "val": 0, "test": 0}
+    missing_samples: list[str] = []
+
+    print("\n[DEBUG] ===== PROCESSING IMAGES =====")
     processed = 0
 
     for rel_path, boxes in bbox_map.items():
         processed += 1
-        
+
         # LOG: 3 entry đầu tiên
         if processed <= 3:
             print(f"\n[DEBUG] Entry #{processed}:")
             print(f"  rel_path: '{rel_path}'")
             print(f"  boxes: {boxes}")
-        
+
         split = split_map.get(rel_path)
-        
+
         if processed <= 3:
             print(f"  split: {split}")
-        
+
         if split is None:
             skipped_no_split += 1
             if processed <= 3:
-                print(f"  → Bỏ qua (không có split)")
+                print("  → Bỏ qua (không có split)")
             continue
-            
+
         if split in {"query", "gallery"}:
             split = "test"
             if processed <= 3:
                 print(f"  → Đổi split thành: {split}")
 
         src_img = _resolve_img_path(base_dir, rel_path)
-        
+
         if processed <= 3:
             print(f"  Tìm ảnh: {src_img}")
-        
+
         if not src_img:
             skipped_missing_img += 1
             if len(missing_samples) < 5:
                 missing_samples.append(f"{base_dir} + {rel_path}")
             if processed <= 3:
-                print(f"  → Bỏ qua (không tìm thấy ảnh)")
+                print("  → Bỏ qua (không tìm thấy ảnh)")
             continue
 
         try:
@@ -326,8 +325,8 @@ def convert_deepfashion_cts_to_yolo(
         lbl_out = save_dir / "labels" / split / rel_out.with_suffix(".txt")
         lbl_out.parent.mkdir(parents=True, exist_ok=True)
 
-        lines: List[str] = []
-        for (x1, y1, x2, y2) in boxes:
+        lines: list[str] = []
+        for x1, y1, x2, y2 in boxes:
             x1 = max(0, min(x1, w - 1))
             x2 = max(0, min(x2, w - 1))
             y1 = max(0, min(y1, h - 1))
@@ -345,7 +344,7 @@ def convert_deepfashion_cts_to_yolo(
         if not lines:
             skipped_no_bbox += 1
             if processed <= 3:
-                print(f"  → Bỏ qua (không có bbox hợp lệ)")
+                print("  → Bỏ qua (không có bbox hợp lệ)")
             continue
 
         with open(lbl_out, "w", encoding="utf-8") as f:
@@ -356,7 +355,7 @@ def convert_deepfashion_cts_to_yolo(
 
         kept += 1
         splits_count[split] = splits_count.get(split, 0) + 1
-        
+
         if processed <= 3:
             print(f"  → ✓ Lưu thành công vào {split}")
 
@@ -373,7 +372,7 @@ def convert_deepfashion_cts_to_yolo(
             f"  0: {class_name}\n"
         )
 
-    print(f"\n[✓] Hoàn tất!")
+    print("\n[✓] Hoàn tất!")
     print(f"  - Giữ: {kept} ảnh")
     print(f"  - Bỏ qua (không có split): {skipped_no_split}")
     print(f"  - Bỏ qua (thiếu ảnh): {skipped_missing_img}")
